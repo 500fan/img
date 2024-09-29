@@ -1,19 +1,10 @@
 ---
 title: 日语
-date: 2024-06-20 09:25:00
+date: 2024-09-29 13:14:20
 author: 其他
-img: medias/featureimages/24.jpg
-top: true
-hide: false
-cover: true
-coverImg: /images/2.jpeg
-#password: 03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4 #这个是SHA256加密1234，输入1234
-toc: false
-mathjax: false
 summary: 音标
-categories: 122
+categories:question
 tags:
-  - Typora
   - Markdown
 ---
 
