@@ -1,0 +1,3 @@
+objectId,display_name,email,password,type,url,avatar,label,github,twitter,facebook,google,weibo,qq,oidc,createdAt,updatedAt
+,Jin,392637221@qq.com,$2a$08$oO969L1x7O7.Y.iauf5sGe5hjmr6AI6vocy/iTdtFZ7A6E3OeW706,administrator,r,https://avatars.githubusercontent.com/u/49046305?v=4,,500fan,,,,,,,,
+,admin,admin@example.com,$2a$08$apOE4GGE7wQowKWKsVhsIeq4NdBsnfMpZQ2lzdX6BTtQk/JKcvzna,guest,,,,,,,,,,,,
