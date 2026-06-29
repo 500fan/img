@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "install": "cd artitalk01 && npm install",
-    "start": "cd artitalk01 && node start.js"
+    "start": "bash start.sh"
   }
 }
