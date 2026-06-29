@@ -52,29 +52,73 @@ module.exports = class extends BaseRest {
   }
 
   async getAction() {
-    const { path: url, page, pageSize, sortBy } = this.get();
-    const where = { url };
-    const count = await this.modelInstance.count(where);
-    const totalPages = Math.ceil(count / pageSize);
-    const spamCount = await this.modelInstance.count({ ...where, status: 'spam' });
-    const waitingCount = await this.modelInstance.count({ ...where, status: 'waiting' });
-    const comments = await this.modelInstance.select(where, {
-      desc: sortBy === 'time' ? 'insertedAt' : 'like',
-      limit: pageSize,
-      offset: (page - 1) * pageSize,
+    const { type } = this.get();
+    if (type === 'count') {
+      const { path: url } = this.get();
+      const count = await this.modelInstance.count({ url, status: ['NOT IN', ['waiting', 'spam']] });
+      return this.json({ errno: 0, errmsg: '', data: count });
+    }
+    if (type === 'recent') {
+      const { count: cnt } = this.get();
+      const comments = await this.modelInstance.select({ status: ['NOT IN', ['waiting', 'spam']] });
+      const data = comments.slice(0, cnt || 10).map(c => {
+        c.time = new Date(c.insertedAt).getTime();
+        delete c.createdAt; delete c.updatedAt;
+        c.like = Number(c.like) || 0;
+        return c;
+      });
+      return this.json({ errno: 0, errmsg: '', data });
+    }
+
+    const { path: url, page = 1, pageSize = 10, sortBy } = this.get();
+    const where = { url, status: ['NOT IN', ['waiting', 'spam']] };
+    const totalCount = await this.modelInstance.count(where);
+    const pageOffset = Math.max((page - 1) * pageSize, 0);
+    let allComments = await this.modelInstance.select(where);
+
+    // Sort
+    if (sortBy) {
+      const [field, order] = sortBy.split('_');
+      allComments.sort((a, b) => order === 'desc' ? (b[field] > a[field] ? 1 : -1) : (a[field] > b[field] ? 1 : -1));
+    } else {
+      allComments.sort((a, b) => new Date(b.insertedAt) - new Date(a.insertedAt));
+    }
+
+    // Separate root and child comments
+    const rootComments = allComments.filter(c => !c.rid);
+    const rootCount = rootComments.length;
+    const pagedRoots = rootComments.slice(pageOffset, pageOffset + pageSize);
+    const rootIds = {};
+    pagedRoots.forEach(c => { rootIds[c.objectId] = true; });
+
+    // Include children of visible root comments
+    const visibleComments = allComments.filter(c => rootIds[c.objectId] || rootIds[c.rid]);
+
+    // Build tree
+    const commentMap = {};
+    visibleComments.forEach(c => {
+      c.time = new Date(c.insertedAt).getTime();
+      delete c.insertedAt; delete c.createdAt; delete c.updatedAt;
+      c.like = Number(c.like) || 0;
+      c.children = [];
+      commentMap[c.objectId] = c;
     });
+    visibleComments.forEach(c => {
+      if (c.rid && commentMap[c.rid]) {
+        commentMap[c.rid].children.push(c);
+      }
+    });
+
+    const result = pagedRoots.map(c => commentMap[c.objectId]).filter(Boolean);
+
     return this.json({
       errno: 0, errmsg: '',
       data: {
-        page, totalPages, pageSize,
-        count: count - spamCount - waitingCount,
-        data: comments.map(c => {
-          c.time = new Date(c.insertedAt).getTime();
-          delete c.insertedAt; delete c.createdAt; delete c.updatedAt;
-          c.like = Number(c.like) || 0;
-          c.children = [];
-          return c;
-        }),
+        page: Number(page),
+        totalPages: Math.ceil(rootCount / pageSize),
+        pageSize: Number(pageSize),
+        count: rootCount,
+        data: result,
       },
     });
   }
