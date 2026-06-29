@@ -48,4 +48,14 @@ if (fs.existsSync(commentCtrlPath)) {
   console.log('[patch] comment.js postAction simplified (getAction preserved)');
 }
 
+// Patch 5: Downgrade client from v3 to v1 (v3 incompatible with server v1.33.0)
+if (fs.existsSync(controllerPath)) {
+  let code = fs.readFileSync(controllerPath, 'utf-8');
+  if (code.includes('@waline/client@v3')) {
+    code = code.replace(/@waline\/client@v3/g, '@waline/client@v1');
+    fs.writeFileSync(controllerPath, code);
+    console.log('[patch] Client downgraded from v3 to v1');
+  }
+}
+
 console.log('[patch] Done');
