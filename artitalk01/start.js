@@ -14,12 +14,12 @@ app.get('/', (req, res) => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${siteName}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@v1/dist/waline.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@v3/dist/waline.css">
 </head>
 <body>
   <div id="waline" style="max-width:800px;margin:40px auto;padding:0 20px;"></div>
   <script type="module">
-    import { init } from 'https://cdn.jsdelivr.net/npm/@waline/client@v1/dist/waline.js';
+    import { init } from 'https://cdn.jsdelivr.net/npm/@waline/client@v3/dist/waline.js';
     const params = new URLSearchParams(location.search.slice(1));
     init({
       el: '#waline',
