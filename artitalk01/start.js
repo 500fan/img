@@ -5,6 +5,41 @@ const walineFactory = require('@waline/vercel');
 const walineHandler = walineFactory();
 const app = express();
 
+// Custom homepage - overrides waline's default index (fixes CDN + imageUploader)
+const siteName = process.env.SITE_NAME || 'Waline';
+app.get('/', (req, res) => {
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${siteName}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@v1/dist/waline.css">
+</head>
+<body>
+  <div id="waline" style="max-width:800px;margin:40px auto;padding:0 20px;"></div>
+  <script type="module">
+    import { init } from 'https://cdn.jsdelivr.net/npm/@waline/client@v1/dist/waline.js';
+    const params = new URLSearchParams(location.search.slice(1));
+    init({
+      el: '#waline',
+      path: params.get('path') || '/',
+      lang: params.get('lng') || undefined,
+      serverURL: location.protocol + '//' + location.host + location.pathname.replace(/\\/+$/, ''),
+      imageUploader: async (file) => {
+        const fd = new FormData();
+        fd.append('file', file);
+        const r = await fetch('/api/upload', { method: 'POST', body: fd });
+        const j = await r.json();
+        if (j.errno !== 0) throw new Error(j.errmsg || 'upload failed');
+        return j.data[0];
+      },
+    });
+  </script>
+</body>
+</html>`);
+});
+
 app.post(['/upload', '/api/upload'], (req, res) => {
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPO || '500fan/img';
